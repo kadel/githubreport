@@ -3,12 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
+	"net/http"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"
+	blackfriday "gopkg.in/russross/blackfriday.v2"
 )
 
 const working = "Currently working on:"
@@ -40,7 +43,7 @@ func getPRs(client *github.Client, ctx context.Context, repo string, updated str
 
 }
 
-func main() {
+func handler(w http.ResponseWriter, r *http.Request) {
 	token := os.Getenv("GITHUBREPORT_TOKEN")
 
 	ctx := context.Background()
@@ -85,13 +88,25 @@ func main() {
 
 	}
 
+	out := fmt.Sprintf("## Report  from:%s to:%s\n", date, time.Now().Format("2006-01-02"))
 	for info, repos := range allInfo {
-		fmt.Printf("- %s \n", info)
+		out = out + fmt.Sprintf("\n\n- %s\n", info)
 		for repo, prs := range repos {
-			fmt.Printf("  - %s\n", strings.Split(repo, "/")[1])
+			out = out + fmt.Sprintf("    - %s\n", strings.Split(repo, "/")[1])
 			for _, pr := range prs {
-				fmt.Printf("    - %s\n", pr)
+				out = out + fmt.Sprintf("        - %s\n", pr)
 			}
 		}
 	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	fmt.Fprintf(w, string(blackfriday.Run([]byte(out))[:]))
+
+}
+
+func main() {
+
+	http.HandleFunc("/", handler)
+	log.Fatal(http.ListenAndServe(":8080", nil))
+
 }
