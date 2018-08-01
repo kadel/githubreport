@@ -14,7 +14,7 @@ import (
 const working = "Currently working on:"
 const done = "Done since last week:"
 
-var repos = []string{"kedgeproject/kedge", "kubernetes/kompose", "redhat-developer/ocdev"}
+var repos = []string{"redhat-developer/odo"}
 
 func getPRs(client *github.Client, ctx context.Context, repo string, updated string, is string) ([]github.Issue, error) {
 	opt := &github.SearchOptions{
